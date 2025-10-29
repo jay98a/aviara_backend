@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# VSCode IDE
+.vscode/
+.vscode/*
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+env_backup.txt
+
+# Editor directories and files
+.vscode/
+*.swp
+*~
+.idea/
+.project
+.pydevproject
+
+# Django's default SQLite database
+*.sqlite3
+
+# Django migrations
+*/migrations/*
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.log.*
+.DS_Store
+
+update_current_wait_time.py
+bulk_email.py
