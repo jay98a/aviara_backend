@@ -10,8 +10,11 @@ class Clinic(models.Model):
     name = models.CharField(max_length=255)
     address = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    zip = models.CharField(max_length=20, blank=True, null=True)
     contact_number = models.CharField(max_length=20, blank=True, null=True)
     timezone = models.CharField(max_length=100, blank=True, null=True)
+    logo = models.TextField()
 
     class Meta:
         db_table = 'clinics'

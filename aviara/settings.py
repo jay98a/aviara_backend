@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-
+from aviara.helpers.logger import JsonFormatter
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -127,8 +127,79 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = os.getenv("MEDIA_URL")
+MEDIA_ROOT = os.getenv("MEDIA_ROOT")
+
+# Maximum size of uploaded files in bytes (e.g., 10 MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20 MB
+
+# Maximum size of request body in bytes (e.g., 10 MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20 MB
+
+# logging configuration
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'json': {
+            '()': JsonFormatter,
+        },
+    },
+    'handlers': {
+        'file_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'formatter': 'json',
+            'filename': os.path.join(BASE_DIR, 'logs', 'info.log'),
+            'when': 'midnight',
+            'backupCount': 15,
+        },
+        'file_error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'formatter': 'json',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'when': 'midnight',
+            'backupCount': 15,
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file_info', 'file_error', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'linepal_apis': {  # Ensure this matches your logger name
+            'handlers': ['file_info', 'file_error', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dashboard': {  # Add logger for dashboard app
+            'handlers': ['file_info', 'file_error', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Ensure the logs directory exists
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
