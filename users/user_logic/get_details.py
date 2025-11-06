@@ -20,12 +20,16 @@ def get_doctor_details(request):
             if doctor_obj.clinic.logo:
                 image_path = os.path.join(settings.MEDIA_ROOT, doctor_obj.clinic.logo)
                 logo_url = get_image_url(request,image_path)
+                profile_picture_path = os.path.join(settings.MEDIA_ROOT, doctor_obj.profile_picture)
+                profile_picture_url = get_image_url(request,profile_picture_path)
+
             else:
                 logo_url = None
             
             doctor_details = {
                 'doctor_id': doctor_obj.id,
                 'doctor_name': doctor_obj.user.full_name,
+                'doctor_profile_picture': profile_picture_url,
                 'doctor_specialization': doctor_obj.specialization,
                 'doctor_license_number': doctor_obj.license_number,
                 'doctor_experience': doctor_obj.years_of_experience,

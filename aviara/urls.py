@@ -18,6 +18,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from users.user_logic.signup import signup
+from users.user_logic.login import login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,6 +27,9 @@ urlpatterns = [
     path('clinics/', include('clinics.urls')),
     path('appointments/', include('appointments.urls')),
 
+    #auth apis
+    path('auth/signup/', signup, name='signup'),
+    path('auth/login/', login, name='login'),
 ]
 
 if settings.DEBUG:

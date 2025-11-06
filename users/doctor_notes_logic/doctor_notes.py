@@ -36,7 +36,7 @@ def remove_doctor_note(request):
         doctor_id = data.get('doctor_id')
         doctor_note_id = data.get('doctor_note_id')
         
-        doctor_note = DoctorNote.objects.filter(id=doctor_note_id).first()
+        doctor_note = DoctorNote.objects.filter(id=doctor_note_id, doctor_id=doctor_id).first()
         if not doctor_note:
             return JsonResponse({'error': 'Doctor note not found'}, status=404)
         doctor_note.delete()
