@@ -32,6 +32,7 @@ def get_appointments(request):
         for appointment in appointments:
             appointments_list.append({
                 'appointment_id': appointment.id,
+                'appointment_type': appointment.appointment_type,
                 'patinet_id': appointment.patient.id,
                 'patient_name': appointment.patient.first_name + ' ' + appointment.patient.last_name,
                 'patient_phone': appointment.patient.phone_number,

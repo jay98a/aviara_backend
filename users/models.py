@@ -38,6 +38,7 @@ class Doctor(models.Model):
     license_number = models.CharField(max_length=100, blank=True, null=True)
     years_of_experience = models.PositiveIntegerField(default=0)
     profile_picture = models.TextField(blank=True, null=True)
+    hire_date = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = 'doctors'
