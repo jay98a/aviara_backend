@@ -10,6 +10,7 @@ def create_appointment(request):
         doctor_id = data.get('doctor_id')
         patient_id = data.get('patient_id')
         clinic_id = data.get('clinic_id')
+        appointment_type = data.get('appointment_type'),
         scheduled_time = data.get('scheduled_time')
         status = data.get('status')
         notes = data.get('notes')
@@ -18,6 +19,7 @@ def create_appointment(request):
             doctor_id=doctor_id,
             patient_id=patient_id,
             clinic_id=clinic_id,
+            appointment_type=appointment_type if appointment_type else 'Consultation',
             scheduled_time=scheduled_time,
             status=status,
             notes=notes
