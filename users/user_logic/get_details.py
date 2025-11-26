@@ -46,7 +46,7 @@ def get_doctor_details(request):
                 'doctor_clinic_zip': doctor_obj.clinic.zip,
                 'doctor_clinic_contact_number': doctor_obj.clinic.contact_number,
                 'total_patient_records': doctor_obj.patients.count(),
-                'doctor_ps': doctor_obj.user.password,
+                'doctor_email': doctor_obj.user.email,
             }
             return JsonResponse({'doctor': doctor_details}, status=200)
         else:
