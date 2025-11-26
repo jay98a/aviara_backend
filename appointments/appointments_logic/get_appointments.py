@@ -20,15 +20,20 @@ def get_appointments(request):
         
         if not clinic_obj.timezone:
             clinic_timezone = 'EST'
+        else:
+            clinic_timezone = clinic_obj.timezone
+
         clinic_timezone = pytz.timezone(clinic_timezone)
 
-        utc_date = datetime.datetime.now(pytz.utc).date()
-        clinic_timezone = clinic_obj.timezone
+        # convert the date to the clinic timezone
+        clinic_date = datetime.datetime.strptime(date, '%Y-%m-%d').replace(tzinfo=pytz.utc).astimezone(clinic_timezone)
+
+        clinic_utc_date = clinic_date.astimezone(pytz.utc).date()
        
         
         appointments_list = []
         # get all the appointments for the given date (dates are stored in utc timezone so we need to convert them to the clinic timezone)
-        appointments = Appointment.objects.filter(scheduled_time__date=utc_date, doctor_id=doctor_id, clinic_id=clinic_id)
+        appointments = Appointment.objects.filter(scheduled_time__date=clinic_utc_date, doctor_id=doctor_id, clinic_id=clinic_id)
         for appointment in appointments:
             appointments_list.append({
                 'appointment_id': appointment.id,
