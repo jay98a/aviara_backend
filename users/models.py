@@ -48,12 +48,13 @@ class Doctor(models.Model):
 # --------------------
 class Patient(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name="patients")
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="patient_profile", null=True, blank=True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name="patients", null=True, blank=True)
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255)
     date_of_birth = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=10, blank=True, null=True)
+    gender = models.CharField(max_length=50, blank=True, null=True)
     ssn = models.CharField(max_length=20, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
@@ -62,6 +63,7 @@ class Patient(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
     date_added = models.DateTimeField(default=timezone.now)
+    intake_completed = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'patients'
@@ -71,15 +73,16 @@ class PatientInsurance(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="insurances")
     
-    insurance_company = models.CharField(max_length=255)
-    insurance_policy_number = models.CharField(max_length=255)
-    insurance_policy_holder_name = models.CharField(max_length=255)
-    insurance_policy_holder_ssn = models.CharField(max_length=20)
+    # Insurance Information
+    insurance_provider_name = models.CharField(max_length=255, blank=True, null=True)
+    member_id = models.CharField(max_length=255, blank=True, null=True)
+    policy_holder_name = models.CharField(max_length=255, blank=True, null=True)
 
     primary_care_physician_name = models.CharField(max_length=255, null=True, blank=True)
     primary_care_physician_phone = models.CharField(max_length=20, null=True, blank=True)
     primary_care_clinic_name = models.CharField(max_length=255, null=True, blank=True)
 
+    # Preferred Pharmacy
     preferred_pharmacy_name = models.CharField(max_length=255, null=True, blank=True)
     preferred_pharmacy_address = models.TextField(null=True, blank=True)
     preferred_pharmacy_phone = models.CharField(max_length=20, null=True, blank=True)
@@ -143,3 +146,66 @@ class FamilyHistory(models.Model):
 
     class Meta:
         db_table = 'patient_family_history'
+
+
+class PatientHealthWellness(models.Model):
+    TOBACCO_CHOICES = [
+        ('never', 'Never'),
+        ('former', 'Former'),
+        ('current', 'Current'),
+    ]
+    
+    ALCOHOL_CHOICES = [
+        ('never', 'Never'),
+        ('occasionally', 'Occasionally'),
+        ('frequently', 'Frequently'),
+    ]
+    
+    EXERCISE_CHOICES = [
+        ('never', 'Never'),
+        ('1-2x/week', '1-2x/week'),
+        ('3-4x/week', '3-4x/week'),
+        ('5+ x/week', '5+ x/week'),
+    ]
+    
+    MENTAL_HEALTH_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.OneToOneField(Patient, on_delete=models.CASCADE, related_name='health_wellness')
+    tobacco_use = models.CharField(max_length=20, choices=TOBACCO_CHOICES, blank=True, null=True)
+    alcohol_use = models.CharField(max_length=20, choices=ALCOHOL_CHOICES, blank=True, null=True)
+    exercise = models.CharField(max_length=20, choices=EXERCISE_CHOICES, blank=True, null=True)
+    mental_health = models.CharField(max_length=20, choices=MENTAL_HEALTH_CHOICES, blank=True, null=True)
+    diet_preferences = models.TextField(blank=True, null=True)
+    current_health_concerns = models.TextField(blank=True, null=True)
+    date_added = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'patient_health_wellness'
+
+
+class PatientConsent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.OneToOneField(Patient, on_delete=models.CASCADE, related_name='consents')
+    
+    consent_for_treatment = models.BooleanField(default=False)
+    authorization_release_medical_info = models.BooleanField(default=False)
+    assignment_insurance_benefits = models.BooleanField(default=False)
+    hipaa_acknowledgment = models.BooleanField(default=False)
+    telehealth_consent = models.BooleanField(default=False)
+    authorization_electronic_communication = models.BooleanField(default=False)
+    authorization_prescription_history = models.BooleanField(default=False)
+    consent_preventive_health_outreach = models.BooleanField(default=False)
+    
+    digital_signature_name = models.CharField(max_length=255, blank=True, null=True)
+    digital_signature = models.TextField(blank=True, null=True)
+    signature_date_of_birth = models.DateField(blank=True, null=True)
+    signature_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'patient_consents'
