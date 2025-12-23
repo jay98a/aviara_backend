@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from users.models import (
     User, Patient, PatientInsurance, Medication, Allergen, PatientAllergy,
-    SurgicalHistory, FamilyHistory, PatientHealthWellness, PatientConsent
+    SurgicalHistory, FamilyHistory, FamilyHistoryCondition, PatientHealthWellness, PatientConsent
 )
 from datetime import datetime
 
@@ -251,18 +251,39 @@ def submit_medical_history(request):
                 if isinstance(allergies, dict):
                     for allergen_name, is_allergic in allergies.items():
                         if allergen_name.lower() == 'other':
-                            # Handle other allergies
+                            # Handle other allergies - support both string and array
                             other_allergy = data.get('other_allergy', '')
+                            other_allergy_notes = data.get('other_allergy_notes', '')
+                            
                             if other_allergy:
-                                allergen, _ = Allergen.objects.get_or_create(name=other_allergy)
-                                PatientAllergy.objects.create(
-                                    patient=patient,
-                                    allergen=allergen,
-                                    is_allergic=True,
-                                    notes=data.get('other_allergy_notes', '')
-                                )
+                                # Handle array of other allergies
+                                if isinstance(other_allergy, list):
+                                    for other_item in other_allergy:
+                                        if other_item and isinstance(other_item, str):
+                                            # Convert to lowercase for consistency
+                                            allergen_name_lower = other_item.strip().lower()
+                                            if allergen_name_lower:
+                                                allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
+                                                PatientAllergy.objects.create(
+                                                    patient=patient,
+                                                    allergen=allergen,
+                                                    is_allergic=True,
+                                                    notes=other_allergy_notes
+                                                )
+                                # Handle single string other allergy (backward compatibility)
+                                elif isinstance(other_allergy, str) and other_allergy.strip():
+                                    allergen_name_lower = other_allergy.strip().lower()
+                                    allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
+                                    PatientAllergy.objects.create(
+                                        patient=patient,
+                                        allergen=allergen,
+                                        is_allergic=True,
+                                        notes=other_allergy_notes
+                                    )
                         else:
-                            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+                            # Convert allergen name to lowercase for consistency
+                            allergen_name_lower = allergen_name.strip().lower()
+                            allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
                             # Convert string "Yes"/"No" to boolean
                             if isinstance(is_allergic, bool):
                                 is_allergic_bool = is_allergic
@@ -282,17 +303,34 @@ def submit_medical_history(request):
                         if isinstance(allergy_item, dict):
                             allergen_name = allergy_item.get('name', '')
                             if allergen_name.lower() == 'other':
+                                # Handle other allergies from list format
                                 other_allergy = data.get('other_allergy', '')
                                 if other_allergy:
-                                    allergen, _ = Allergen.objects.get_or_create(name=other_allergy)
-                                    PatientAllergy.objects.create(
-                                        patient=patient,
-                                        allergen=allergen,
-                                        is_allergic=True,
-                                        notes=allergy_item.get('notes', '')
-                                    )
+                                    if isinstance(other_allergy, list):
+                                        for other_item in other_allergy:
+                                            if other_item and isinstance(other_item, str):
+                                                allergen_name_lower = other_item.strip().lower()
+                                                if allergen_name_lower:
+                                                    allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
+                                                    PatientAllergy.objects.create(
+                                                        patient=patient,
+                                                        allergen=allergen,
+                                                        is_allergic=True,
+                                                        notes=allergy_item.get('notes', '') or data.get('other_allergy_notes', '')
+                                                    )
+                                    elif isinstance(other_allergy, str) and other_allergy.strip():
+                                        allergen_name_lower = other_allergy.strip().lower()
+                                        allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
+                                        PatientAllergy.objects.create(
+                                            patient=patient,
+                                            allergen=allergen,
+                                            is_allergic=True,
+                                            notes=allergy_item.get('notes', '') or data.get('other_allergy_notes', '')
+                                        )
                             else:
-                                allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+                                # Convert allergen name to lowercase
+                                allergen_name_lower = allergen_name.strip().lower()
+                                allergen, _ = Allergen.objects.get_or_create(name=allergen_name_lower)
                                 is_allergic = allergy_item.get('is_allergic', False)
                                 PatientAllergy.objects.create(
                                     patient=patient,
@@ -327,6 +365,10 @@ def submit_medical_history(request):
                 if isinstance(family_history, dict):
                     for condition, has_condition in family_history.items():
                         if condition.lower() != 'other':
+                            # Convert condition name to lowercase for consistency
+                            condition_lower = condition.strip().lower()
+                            # Get or create reusable condition
+                            condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
                             # Convert to boolean
                             if isinstance(has_condition, bool):
                                 has_condition_bool = has_condition
@@ -337,38 +379,78 @@ def submit_medical_history(request):
                             
                             FamilyHistory.objects.create(
                                 patient=patient,
-                                condition=condition,
+                                condition=condition_obj,
                                 has_condition=has_condition_bool
                             )
                         else:
-                            # Handle other family history
+                            # Handle other family history - support both string and array
                             other_condition = data.get('other_family_history', '')
                             if other_condition:
-                                FamilyHistory.objects.create(
-                                    patient=patient,
-                                    condition=other_condition,
-                                    has_condition=True
-                                )
+                                # Handle array of other conditions
+                                if isinstance(other_condition, list):
+                                    for other_item in other_condition:
+                                        if other_item and isinstance(other_item, str):
+                                            # Convert to lowercase for consistency
+                                            condition_lower = other_item.strip().lower()
+                                            if condition_lower:
+                                                # Get or create reusable condition
+                                                condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
+                                                FamilyHistory.objects.create(
+                                                    patient=patient,
+                                                    condition=condition_obj,
+                                                    has_condition=True
+                                                )
+                                # Handle single string other condition (backward compatibility)
+                                elif isinstance(other_condition, str) and other_condition.strip():
+                                    condition_lower = other_condition.strip().lower()
+                                    # Get or create reusable condition
+                                    condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
+                                    FamilyHistory.objects.create(
+                                        patient=patient,
+                                        condition=condition_obj,
+                                        has_condition=True
+                                    )
                 # Handle list format: [{"condition": "Cancer", "has_condition": true}, ...]
                 elif isinstance(family_history, list):
                     for item in family_history:
                         if isinstance(item, dict):
                             condition = item.get('condition', '')
                             if condition.lower() != 'other':
+                                # Convert condition name to lowercase
+                                condition_lower = condition.strip().lower()
+                                # Get or create reusable condition
+                                condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
                                 has_condition = item.get('has_condition', False)
                                 FamilyHistory.objects.create(
                                     patient=patient,
-                                    condition=condition,
+                                    condition=condition_obj,
                                     has_condition=bool(has_condition)
                                 )
                             else:
+                                # Handle other family history from list format
                                 other_condition = data.get('other_family_history', '') or item.get('other', '')
                                 if other_condition:
-                                    FamilyHistory.objects.create(
-                                        patient=patient,
-                                        condition=other_condition,
-                                        has_condition=True
-                                    )
+                                    if isinstance(other_condition, list):
+                                        for other_item in other_condition:
+                                            if other_item and isinstance(other_item, str):
+                                                condition_lower = other_item.strip().lower()
+                                                if condition_lower:
+                                                    # Get or create reusable condition
+                                                    condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
+                                                    FamilyHistory.objects.create(
+                                                        patient=patient,
+                                                        condition=condition_obj,
+                                                        has_condition=True
+                                                    )
+                                    elif isinstance(other_condition, str) and other_condition.strip():
+                                        condition_lower = other_condition.strip().lower()
+                                        # Get or create reusable condition
+                                        condition_obj, _ = FamilyHistoryCondition.objects.get_or_create(name=condition_lower)
+                                        FamilyHistory.objects.create(
+                                            patient=patient,
+                                            condition=condition_obj,
+                                            has_condition=True
+                                        )
             
             return JsonResponse({
                 'message': 'Medical history saved successfully',
