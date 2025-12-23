@@ -39,22 +39,43 @@ def signup(request):
         if not email or not password or not full_name or not role:
             return JsonResponse({'error': 'All fields are required'}, status=400)
         
-        user_obj = User.objects.create(email=email, password=password,
-                                       role=role, full_name=full_name,
-                                       is_active=True, is_doctor=is_doctor)
-        user_obj.save()
-        if role == 'doctor':
-            clinic_obj = Clinic.objects.filter(id=clinic_id).first()
-            if not clinic_obj:
-                return JsonResponse({'error': 'Clinic not found'}, status=404)
-            doctor_obj = Doctor.objects.create(user=user_obj, specialization=specialization,
-                                               license_number=license_number,
-                                               years_of_experience=years_of_experience,
-                                               clinic=clinic_obj)
-            doctor_obj.save()
-        elif role == 'patient':
-            patient_obj = Patient.objects.create(user=user_obj)
-            patient_obj.save()
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({
+                'error': f'Email {email} is already registered. Please use a different email or login.'
+            }, status=400)
+        
+        try:
+            user_obj = User.objects.create(email=email, password=password,
+                                           role=role, full_name=full_name,
+                                           is_active=True, is_doctor=is_doctor)
+            user_obj.save()
+        except Exception as e:
+            # Catch any database integrity errors
+            if 'unique constraint' in str(e).lower() or 'duplicate key' in str(e).lower():
+                return JsonResponse({
+                    'error': f'Email {email} is already registered. Please use a different email or login.'
+                }, status=400)
+            return JsonResponse({'error': f'Error creating user: {str(e)}'}, status=500)
+        
+        try:
+            if role == 'doctor':
+                clinic_obj = Clinic.objects.filter(id=clinic_id).first()
+                if not clinic_obj:
+                    # Clean up user if clinic not found
+                    user_obj.delete()
+                    return JsonResponse({'error': 'Clinic not found'}, status=404)
+                doctor_obj = Doctor.objects.create(user=user_obj, specialization=specialization,
+                                                   license_number=license_number,
+                                                   years_of_experience=years_of_experience,
+                                                   clinic=clinic_obj)
+                doctor_obj.save()
+            elif role == 'patient':
+                patient_obj = Patient.objects.create(user=user_obj)
+                patient_obj.save()
+        except Exception as e:
+            # Clean up user if doctor/patient creation fails
+            user_obj.delete()
+            return JsonResponse({'error': f'Error creating {role} profile: {str(e)}'}, status=500)
 
-
-    return JsonResponse({'message': 'Signup successful'}, status=200)
+        return JsonResponse({'message': 'Signup successful'}, status=200)
