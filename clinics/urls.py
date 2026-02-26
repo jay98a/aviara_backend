@@ -3,6 +3,7 @@ from clinics.clinics_logic.create_clinic import create_clinic
 from clinics.clinics_logic.get_clinic import get_clinic
 from clinics.clinics_logic.update_clinic import update_clinic
 from clinics.clinics_logic.delete_clinic import delete_clinic
+from clinics.clinics_logic.clinic_business_hours import clinic_business_hours
 
 urlpatterns = [
     path('create/', create_clinic, name='create_clinic'),
@@ -10,4 +11,5 @@ urlpatterns = [
     path('get/<str:clinic_id>/', get_clinic, name='get_clinic'),
     path('update/<str:clinic_id>/', update_clinic, name='update_clinic'),
     path('delete/<str:clinic_id>/', delete_clinic, name='delete_clinic'),
+    path('<str:clinic_id>/business_hours/', clinic_business_hours, name='clinic_business_hours'),
 ]
