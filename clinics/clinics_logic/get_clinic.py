@@ -2,7 +2,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
-from clinics.models import Clinic
+from clinics.models import Clinic, ClinicBusinessHours
 
 
 @csrf_exempt
@@ -18,6 +18,16 @@ def get_clinic(request, clinic_id=None):
                 # Get single clinic
                 try:
                     clinic = Clinic.objects.get(id=clinic_id)
+                    hours = ClinicBusinessHours.objects.filter(clinic=clinic).order_by('day_of_week')
+                    business_hours = [
+                        {
+                            'day_of_week': h.day_of_week,
+                            'open_time': h.open_time.strftime('%H:%M') if h.open_time else None,
+                            'close_time': h.close_time.strftime('%H:%M') if h.close_time else None,
+                            'is_closed': h.is_closed,
+                        }
+                        for h in hours
+                    ]
                     return JsonResponse({
                         'clinic': {
                             'id': str(clinic.id),
@@ -29,7 +39,8 @@ def get_clinic(request, clinic_id=None):
                             'zip': clinic.zip,
                             'contact_number': clinic.contact_number,
                             'timezone': clinic.timezone,
-                            'logo': clinic.logo
+                            'logo': clinic.logo,
+                            'business_hours': business_hours
                         }
                     }, status=200)
                 except Clinic.DoesNotExist:

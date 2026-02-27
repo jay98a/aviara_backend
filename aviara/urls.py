@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.urls import path, include
 from users.user_logic.signup import signup
 from users.user_logic.login import login
+from aviara.helpers.skin_lesion.classify import classify_skin_lesion
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +31,9 @@ urlpatterns = [
     #auth apis
     path('auth/signup/', signup, name='signup'),
     path('auth/login/', login, name='login'),
+    
+    # Skin lesion classification
+    path('skin-lesion/classify/', classify_skin_lesion, name='classify_skin_lesion'),
 ]
 
 if settings.DEBUG:

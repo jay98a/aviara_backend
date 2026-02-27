@@ -19,3 +19,21 @@ class Clinic(models.Model):
 
     class Meta:
         db_table = 'clinics'
+
+
+# --------------------
+# CLINIC BUSINESS HOURS
+# --------------------
+class ClinicBusinessHours(models.Model):
+    """Business hours per day. day_of_week: 0=Monday, 6=Sunday."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    clinic = models.ForeignKey(Clinic, on_delete=models.CASCADE, related_name='business_hours')
+    day_of_week = models.PositiveSmallIntegerField()  # 0=Monday, 6=Sunday
+    open_time = models.TimeField(null=True, blank=True)   # null if is_closed
+    close_time = models.TimeField(null=True, blank=True) # null if is_closed
+    is_closed = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'clinic_business_hours'
+        unique_together = [['clinic', 'day_of_week']]
+        ordering = ['clinic', 'day_of_week']
