@@ -15,8 +15,15 @@ def signup(request):
         middle_name = data.get('middle_name')
         last_name = data.get('last_name')
         # TODO: change the password to encryped for security reasons
-        role = data.get('role')
-        if role == 'doctor':
+        role = data.get('role') if data.get('role') else "individual"
+
+
+        if role == "individual":
+            # just register the user normal
+            is_doctor = False
+
+
+        elif role == 'doctor':
             is_doctor = True
             specialization = data.get('specialization')
             license_number = data.get('license_number')
@@ -78,4 +85,6 @@ def signup(request):
             user_obj.delete()
             return JsonResponse({'error': f'Error creating {role} profile: {str(e)}'}, status=500)
 
-        return JsonResponse({'message': 'Signup successful'}, status=200)
+        return JsonResponse({'message': 'Signup successful',
+                             'user_id': user_obj.user_id
+                             }, status=200)

@@ -10,12 +10,14 @@ from users.user_logic.patient_intake import (
     submit_consent_signature
 )
 from users.doctor_notes_logic.doctor_notes import create_doctor_note, get_doctor_notes, remove_doctor_note
+from users.user_logic.update_doctor import update_doctor_details
 
 
 urlpatterns = [
     
     # doctor apis
     path('doctor/get_doctor_details', get_doctor_details, name='get_doctor_details'),
+    path('doctor/update/<str:doctor_id>/', update_doctor_details, name='update_doctor'),
     path('doctor/get_patient_details/', get_patient_details, name='get_patient_details'),
     path('doctor/create_doctor_note/', create_doctor_note, name='create_doctor_note'),
     path('doctor/get_doctor_notes/', get_doctor_notes, name='get_doctor_notes'),

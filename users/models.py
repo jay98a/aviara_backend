@@ -11,6 +11,7 @@ class User(models.Model):
         ("admin", "Admin"),
         ("patient", "Patient"),
         ("doctor", "Doctor"),
+        ("individual", "Individual"),
     )
 
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
