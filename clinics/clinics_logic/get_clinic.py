@@ -18,15 +18,18 @@ def get_clinic(request, clinic_id=None):
                 # Get single clinic
                 try:
                     clinic = Clinic.objects.get(id=clinic_id)
-                    hours = ClinicBusinessHours.objects.filter(clinic=clinic).order_by('day_of_week')
+                    hours = ClinicBusinessHours.objects.filter(clinic=clinic).order_by('day_of_week', 'open_time')
+                    by_day = {}
+                    for h in hours:
+                        if h.day_of_week not in by_day:
+                            by_day[h.day_of_week] = []
+                        by_day[h.day_of_week].append({
+                            'open_time': h.open_time.strftime('%H:%M'),
+                            'close_time': h.close_time.strftime('%H:%M'),
+                        })
                     business_hours = [
-                        {
-                            'day_of_week': h.day_of_week,
-                            'open_time': h.open_time.strftime('%H:%M') if h.open_time else None,
-                            'close_time': h.close_time.strftime('%H:%M') if h.close_time else None,
-                            'is_closed': h.is_closed,
-                        }
-                        for h in hours
+                        {'day_of_week': d, 'slots': by_day.get(d, [])}
+                        for d in range(7)
                     ]
                     return JsonResponse({
                         'clinic': {
