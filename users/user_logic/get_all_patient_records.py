@@ -39,6 +39,6 @@ def get_all_patient_records(request, doctor_id):
             }
             patient_data_list.append(patient_data)
         if patient_obj:
-            return JsonResponse({'patient_list': patient_data}, status=200)
+            return JsonResponse({'patient_list': patient_data_list}, status=200)
         else:
             return JsonResponse({'error': 'Patient list not found'}, status=404)

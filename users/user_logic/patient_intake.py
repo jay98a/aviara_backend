@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_date
 from users.models import (
-    User, Patient, PatientInsurance, Medication, Allergen, PatientAllergy,
+    User, Patient, Doctor, PatientInsurance, Medication, Allergen, PatientAllergy,
     SurgicalHistory, FamilyHistory, FamilyHistoryCondition, PatientHealthWellness, PatientConsent
 )
 from datetime import datetime
@@ -517,21 +517,29 @@ def submit_health_wellness(request):
 @csrf_exempt
 def submit_consent_signature(request):
     """
-    Step 5: Submit consent and signature information
+    Step 5: Submit consent and signature information. Requires doctor_id to link patient to a doctor.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             patient_id = data.get('patient_id')
-            
+            doctor_id = data.get('doctor_id')
+
             if not patient_id:
                 return JsonResponse({'error': 'patient_id is required'}, status=400)
-            
+            if not doctor_id:
+                return JsonResponse({'error': 'doctor_id is required'}, status=400)
+
             try:
                 patient = Patient.objects.get(id=patient_id)
             except Patient.DoesNotExist:
                 return JsonResponse({'error': 'Patient not found'}, status=404)
-            
+
+            try:
+                doctor = Doctor.objects.get(id=doctor_id)
+            except Doctor.DoesNotExist:
+                return JsonResponse({'error': 'Doctor not found'}, status=404)
+
             # Security check: Prevent resubmission if intake is already completed
             if patient.intake_completed:
                 return JsonResponse({
@@ -563,14 +571,16 @@ def submit_consent_signature(request):
                 consent.signature_date_of_birth = parse_date(dob) if isinstance(dob, str) else dob
             
             consent.save()
-            
-            # Mark intake as completed
+
+            # Link patient to doctor and mark intake as completed
+            patient.doctor = doctor
             patient.intake_completed = True
             patient.save()
-            
+
             return JsonResponse({
                 'message': 'Consent and signature saved successfully. Intake form completed.',
-                'patient_id': str(patient.id)
+                'patient_id': str(patient.id),
+                'doctor_id': str(doctor.id)
             }, status=200)
             
         except Exception as e:
