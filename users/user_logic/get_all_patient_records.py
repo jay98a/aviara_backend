@@ -41,4 +41,4 @@ def get_all_patient_records(request, doctor_id):
         if patient_obj:
             return JsonResponse({'patient_list': patient_data_list}, status=200)
         else:
-            return JsonResponse({'error': 'Patient list not found'}, status=404)
+            return JsonResponse({'error': 'No patient records found'}, status=200)
